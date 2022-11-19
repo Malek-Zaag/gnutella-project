@@ -4,8 +4,6 @@ import threading
 from tkinter import *
 from tkinter import messagebox
 
-import tqdm as tqdm
-
 # general port in use
 port = 5050
 # determine my address
@@ -18,26 +16,26 @@ s.close()
 
 # server listening
 def server_listen():
-    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_socket.bind((my_address, port))
-    my_socket.listen()
-    conn, addr = my_socket.accept()
-    filename = conn.recv(1024).decode()
-    print(filename)
-    try:
-        if os.path.isfile("./data/test.txt"):
-            file = open(filename, "rb")
-            data = file.read()
-            conn.send(filename.encode())
-            conn.send(os.path.getsize(filename))
-            
-            conn.sendall(data)
-            file.close()
-            conn.close()
-        else:
-            pass
-    except FileNotFoundError:
-        print("File Not Found")
+    while True:
+        my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        my_socket.bind((my_address, port))
+        my_socket.listen()
+        conn, addr = my_socket.accept()
+        filename = conn.recv(1024).decode()
+        try:
+            if os.path.exists(filename):
+                file = open(filename, "rb")
+                data = file.read()
+                conn.send(filename.encode())
+                conn.sendall(data)
+                conn.send(b"<END>")
+                file.close()
+
+            else:
+                pass
+        except FileNotFoundError:
+            conn.send("file not found here")
+            print("File Not Found")
         conn.close()
 
 
@@ -48,7 +46,7 @@ def check_ip():
         response = os.system(f"ping -n 1 {hostname}")
         print(hostname)
         if response == 0:
-            print(hostname + "is online")
+            print(hostname + " is online")
             listbox2.insert(i, hostname)
         else:
             print(hostname + " is offline")
@@ -64,26 +62,21 @@ def add_ip():
 def establish_connection(ip, filename):
     connect_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connect_socket.connect((ip, port))
-    print("conn")
+    filename_sent = filename
     filename = filename.encode()
     connect_socket.send(filename)
-    if connect_socket.recv(1024).decode() == filename:
-        print("filename found")
-        file_size = connect_socket.recv(1024).decode()
+    filename_received = connect_socket.recv(1024).decode()
+    if filename_received == filename_sent:
         listbox3.insert(0, "file found in ", ip, " client")
-        connect_socket.recv(1024)
-        file = open("./data/" + filename, "wb")
+        file = open(filename, "wb")
         file_bytes = b""
-        done = False
-        progress = tqdm.tqdm(unit="B", unit_scale=True, unit_divisor=1000, total=int(file_size))
-        while not done:
-            data = connect_socket.recv(1024)
-            if file_bytes[-5:] == b"<END>":
-                done = True
-            else:
-                file_bytes += data
-            progress.update(1024)
-        file.write(file_bytes)
+        data = connect_socket.recv(1024)
+        file_bytes = data
+        file.write(file_bytes[:-5])
+    else:
+        print("pass here")
+        pass
+    file.close()
     connect_socket.close()
 
 
