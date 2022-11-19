@@ -13,7 +13,7 @@ s.close()
 
 
 def check_ip():
-    for i in range(100, 101):
+    for i in range(140, 141):
         third_point = my_address.index(".", 8, None)
         hostname = my_address[:third_point + 1] + str(i)
         response = os.system(f"ping -n 1 {hostname}")
@@ -80,3 +80,11 @@ button2.grid(row=4, column=0, columnspan=2, sticky="", pady=10)
 listbox3 = Listbox(root, height=20, width=80)
 listbox3.grid(row=1, column=0, columnspan=3, padx=10)
 root.mainloop()
+
+# server listening
+my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+my_server.bind((my_address, port))
+my_server.listen()
+conn, addr = my_server.accept()
+conn.recv().decode()
+conn.close()
