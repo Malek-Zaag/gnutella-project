@@ -1,8 +1,10 @@
 import os
 import socket
+import threading
 from tkinter import *
 from tkinter import messagebox
 
+# general port in use
 port = 5050
 # determine my address
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -10,6 +12,29 @@ s.connect(("8.8.8.8", 80))
 my_address = s.getsockname()[0]
 print(s.getsockname()[0])
 s.close()
+
+
+# server listening
+def server_listen():
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    my_socket.bind((my_address, port))
+    my_socket.listen()
+    conn, addr = my_socket.accept()
+    filename = conn.recv(1024).decode()
+    print(filename)
+    try:
+        if os.path.isfile("./data/test.txt"):
+            file = open(filename, "rb")
+            data = file.read()
+            conn.send(filename.encode())
+            conn.sendall(data)
+            file.close()
+            conn.close()
+        else:
+            pass
+    except FileNotFoundError:
+        print("File Not Found")
+        conn.close()
 
 
 def check_ip():
@@ -28,9 +53,7 @@ def check_ip():
 
 def add_ip():
     listbox2.insert(1, my_address)
-    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_socket.bind((my_address, port))
-    my_socket.listen()
+    threading.Thread(target=server_listen, args=()).start()
     check_ip()
 
 
@@ -38,7 +61,12 @@ def establish_connection(ip, filename):
     connect_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connect_socket.connect((ip, port))
     print("conn")
+    filename = filename.encode()
     connect_socket.send(filename)
+    if connect_socket.recv(1024).decode() == filename:
+        print("filename found")
+        listbox3.insert(0, "file found in ", ip, " client")
+        connect_socket.recv(1024)
     connect_socket.close()
 
 
@@ -46,7 +74,8 @@ def search_file():
     print(2)
     filename = entry1.get()
     print(filename)
-    for i in range(0, listbox2.size()):
+    for i in range(1, listbox2.size()):
+        print(listbox2.get(i))
         establish_connection(listbox2.get(i), filename)
 
 
@@ -80,11 +109,3 @@ button2.grid(row=4, column=0, columnspan=2, sticky="", pady=10)
 listbox3 = Listbox(root, height=20, width=80)
 listbox3.grid(row=1, column=0, columnspan=3, padx=10)
 root.mainloop()
-
-# server listening
-my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-my_server.bind((my_address, port))
-my_server.listen()
-conn, addr = my_server.accept()
-conn.recv().decode()
-conn.close()
