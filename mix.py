@@ -4,7 +4,12 @@ from tkinter import *
 from tkinter import messagebox
 
 port = 5050
-my_address = socket.gethostbyname(socket.gethostname())
+# determine my address
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+my_address = s.getsockname()[0]
+print(s.getsockname()[0])
+s.close()
 
 
 def check_ip():
