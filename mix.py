@@ -26,11 +26,11 @@ def server_listen():
             if os.path.exists(filename):
                 file = open(filename, "rb")
                 data = file.read()
+                print("sending ...")
                 conn.send(filename.encode())
                 conn.sendall(data)
                 conn.send(b"<END>")
                 file.close()
-
             else:
                 pass
         except FileNotFoundError:
@@ -66,6 +66,7 @@ def establish_connection(ip, filename):
     filename = filename.encode()
     connect_socket.send(filename)
     filename_received = connect_socket.recv(1024).decode()
+    print(filename_received)
     if filename_received == filename_sent:
         listbox3.insert(0, "file found in ", ip, " client")
         file = open(filename, "wb")
@@ -73,17 +74,16 @@ def establish_connection(ip, filename):
         data = connect_socket.recv(1024)
         file_bytes = data
         file.write(file_bytes[:-5])
+        file.close()
     else:
         print("pass here")
         pass
-    file.close()
+
     connect_socket.close()
 
 
 def search_file():
-    print(2)
     filename = entry1.get()
-    print(filename)
     for i in range(1, listbox2.size()):
         print(listbox2.get(i))
         establish_connection(listbox2.get(i), filename)
