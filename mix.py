@@ -4,6 +4,8 @@ import threading
 from tkinter import *
 from tkinter import messagebox
 
+import tqdm as tqdm
+
 # general port in use
 port = 5050
 # determine my address
@@ -27,6 +29,8 @@ def server_listen():
             file = open(filename, "rb")
             data = file.read()
             conn.send(filename.encode())
+            conn.send(os.path.getsize(filename))
+            
             conn.sendall(data)
             file.close()
             conn.close()
@@ -65,8 +69,21 @@ def establish_connection(ip, filename):
     connect_socket.send(filename)
     if connect_socket.recv(1024).decode() == filename:
         print("filename found")
+        file_size = connect_socket.recv(1024).decode()
         listbox3.insert(0, "file found in ", ip, " client")
         connect_socket.recv(1024)
+        file = open("./data/" + filename, "wb")
+        file_bytes = b""
+        done = False
+        progress = tqdm.tqdm(unit="B", unit_scale=True, unit_divisor=1000, total=int(file_size))
+        while not done:
+            data = connect_socket.recv(1024)
+            if file_bytes[-5:] == b"<END>":
+                done = True
+            else:
+                file_bytes += data
+            progress.update(1024)
+        file.write(file_bytes)
     connect_socket.close()
 
 
