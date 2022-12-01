@@ -93,7 +93,7 @@ def search_file():
 root = Tk()
 root.eval('tk::PlaceWindow . center')
 root.geometry("750x400")
-root.title("My Gnutella Client")
+root.title("My F2F Client")
 icon = PhotoImage(file="2.png")
 root.iconphoto(True, icon)
 
